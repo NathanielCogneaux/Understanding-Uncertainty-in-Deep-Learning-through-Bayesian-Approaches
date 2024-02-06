@@ -93,3 +93,21 @@ dataset_linear['X_test'] = np.linspace(-10,10, 10*NB_POINTS)
 dataset_linear['y_test'] = f_linear(dataset_linear['X_test'], noise_amount=0, sigma=SIG)
 dataset_linear['ALPHA'] = ALPHA
 dataset_linear['BETA'] = 1/(2.0*SIG**2)
+
+# Plot dataset
+plt.figure(figsize=(7,5))
+plt.xlim(xmax = 3, xmin =-1)
+plt.ylim(ymax = 1.5, ymin = -1)
+plt.plot(dataset_linear['X_test'], dataset_linear['y_test'], color='green', linewidth=2, label="Ground Truth")
+plt.plot(dataset_linear['X_train'], dataset_linear['y_train'], 'o', color='blue', label='Training points')
+plt.legend()
+plt.show()
+
+# We will use the linear basis function:
+
+def phi_linear(x):
+    return np.array((1, x))
+
+
+# Design matrix Phi defined on training set D={(x_n, y_n)}_n by Phi = ((phi(x_i))_i
+
