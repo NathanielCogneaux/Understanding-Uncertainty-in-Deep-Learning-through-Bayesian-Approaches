@@ -108,6 +108,6 @@ plt.show()
 def phi_linear(x):
     return np.array((1, x))
 
-
+# bkabka
 # Design matrix Phi defined on training set D={(x_n, y_n)}_n by Phi = ((phi(x_i))_i
 
