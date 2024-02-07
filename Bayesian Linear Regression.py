@@ -72,10 +72,11 @@ def plot_results(X_train, y_train, X_test, y_test, y_pred, std_pred,
 # We start with a linear dataset where we will analyze the behavior of linear basis functions
 # in the framework of Bayesian Linear Regression.
 
-# Hyperparameters for linear model
+# Given hyperparameters for linear model
 
-SIG = 0.2
-ALPHA = 2.0
+ALPHA = 2.0  # Prior precision
+SIG = 0.2    # Noise standard deviation in the data
+BETA = 1 / (2.0 * SIG ** 2)  # Likelihood precision
 NB_POINTS =25
 
 
@@ -108,6 +109,182 @@ plt.show()
 def phi_linear(x):
     return np.array((1, x))
 
-# bkabka
-# Design matrix Phi defined on training set D={(x_n, y_n)}_n by Phi = ((phi(x_i))_i
 
+
+# Function to compute design matrix
+def design_matrix(X):
+    return np.vstack((np.ones(X.shape), X)).T
+
+# Function to compute posterior mean and covariance
+def compute_posterior(X, y, alpha, beta):
+    Phi = design_matrix(X)
+    Sigma_inv = alpha * np.eye(2) + beta * np.dot(Phi.T, Phi)
+    Sigma = np.linalg.inv(Sigma_inv)
+    mu = beta * np.dot(np.dot(Sigma, Phi.T), y)
+    return mu, Sigma
+
+plt.figure(figsize=(15,7))
+for count, n in enumerate([0, 1, 2, 10, len(dataset_linear['X_train'])]):
+    cur_data = dataset_linear['X_train'][:n]
+    cur_lbl = dataset_linear['y_train'][:n]
+    if n == 0:
+        # Special case for zero data points (prior)
+        mu = np.zeros(2)
+        Sigma = np.linalg.inv(ALPHA * np.eye(2))
+    else:
+        mu, Sigma = compute_posterior(cur_data, cur_lbl, ALPHA, BETA)
+
+    sigmainv = np.linalg.inv(Sigma)
+    meshgrid = np.arange(-1, 1.01, 0.01)
+    w = np.zeros((2,1))
+    posterior = np.zeros((meshgrid.shape[0], meshgrid.shape[0]))
+
+    # Compute values on meshgrid
+    for i in range(meshgrid.shape[0]):
+        for j in range(meshgrid.shape[0]):
+            w[0, 0] = meshgrid[i]
+            w[1, 0] = meshgrid[j]
+            posterior[i, j] = np.exp(-0.5 * np.dot(np.dot((w - mu.reshape(2,1)).T, sigmainv), (w - mu.reshape(2,1))))
+    Z = 1.0 / (np.sqrt(2 * np.pi * np.linalg.det(Sigma)))
+    posterior /= Z
+
+    # Plot posterior with n points
+    plt.subplot(151 + count)
+    plt.imshow(posterior, extent=[-1, 1, -1, 1], origin='lower')
+    plt.plot(0.5, 0.3, '+', markeredgecolor='white', markeredgewidth=3, markersize=12)
+    plt.title(f'Posterior with N={n} points')
+
+plt.tight_layout()
+plt.show()
+
+def closed_form(func, X_train, y_train, alpha, beta):
+    """Define analytical solution to Bayesian Linear Regression, with respect to the basis function chosen, the
+    training set (X_train, y_train) and the noise precision parameter beta and prior precision parameter alpha chosen.
+    It should return a function outputing both mean and std of the predictive distribution at a point x*.
+
+    Args:
+      func: (function) the basis function used
+      X_train: (array) train inputs, size (N,)
+      y_train: (array) train labels, size (N,)
+      alpha: (float) prior precision parameter
+      beta: (float) noise precision parameter
+
+    Returns:
+      (function) prediction function, returning itself both mean and std
+    """
+
+    # Compute the design matrix using the basis function
+    Phi = np.array([func(x) for x in X_train])
+
+    # Compute posterior covariance Sigma
+    Sigma = np.linalg.inv(alpha * np.eye(Phi.shape[1]) + beta * np.dot(Phi.T, Phi))
+
+    # Compute posterior mean mu
+    mu = beta * np.dot(np.dot(Sigma, Phi.T), y_train)
+
+    # Prediction function that computes mean and std of the predictive distribution
+    def f_model(x):
+        # Transform x* into feature space
+        phi_x = np.array(func(x))
+
+        # Compute mean of the predictive distribution
+        mean = np.dot(mu.T, phi_x)
+
+        # Compute variance (std^2) of the predictive distribution
+        sigma2 = (1 / beta) + np.dot(np.dot(phi_x.T, Sigma), phi_x)
+
+        # Return mean and standard deviation
+        return mean, np.sqrt(sigma2)
+
+    return f_model
+
+# Initialize predictive function
+f_pred = closed_form(phi_linear, dataset_linear['X_train'], dataset_linear['y_train'],
+                     dataset_linear['ALPHA'], dataset_linear['BETA'])
+
+# Assuming dataset_linear['X_test'] is defined and f_pred has been initialized as above
+X_test = dataset_linear['X_test']
+y_test = dataset_linear['y_test']  # Assuming you have the ground truth for test set for visualization
+
+# Predictions and uncertainties for each point in the test set
+y_pred = []
+std_pred = []
+for x in X_test:
+    mean, std = f_pred(x)
+    y_pred.append(mean)
+    std_pred.append(std)
+
+# Convert to numpy arrays for plotting
+y_pred = np.array(y_pred)
+std_pred = np.array(std_pred)
+
+# Visualization using the specified parameters
+plot_results(dataset_linear['X_train'], dataset_linear['y_train'], X_test, y_test, y_pred, std_pred,
+             xmin=-10, xmax=10, ymin=-6, ymax=6, stdmin=0.05, stdmax=1)
+
+
+
+
+# Generate dataset with a "hole"
+X_train_hole = np.concatenate(([np.random.uniform(-3, -1, 10), np.random.uniform(1, 3, 10)]), axis=0)
+y_train_hole = -0.3 + 0.5 * X_train_hole + np.random.normal(0, SIG, len(X_train_hole))
+X_test_hole = np.linspace(-12, 12, 100)
+y_test_hole = -0.3 + 0.5 * X_test_hole
+
+# Plot dataset
+plt.figure(figsize=(7,5))
+plt.xlim(xmin =-12, xmax = 12)
+plt.ylim(ymin = -7, ymax = 6)
+plt.plot(X_test_hole, y_test_hole, color='green', linewidth=2, label="Ground Truth")
+plt.plot(X_train_hole, y_train_hole, 'o', color='blue', label='Training points')
+plt.legend()
+plt.show()
+
+def phi_linear(x):
+    """Linear basis function."""
+    return np.array([1, x])
+
+def closed_form(func, X_train, y_train, alpha, beta):
+    """Define analytical solution to Bayesian Linear Regression."""
+    Phi = np.vstack([func(x) for x in X_train])
+    Sigma = np.linalg.inv(alpha * np.eye(Phi.shape[1]) + beta * np.dot(Phi.T, Phi))
+    mu = beta * np.dot(Sigma, np.dot(Phi.T, y_train))
+
+    def predict(x):
+        phi_x = func(x)
+        mean = np.dot(phi_x, mu)
+        sigma = 1 / beta + np.dot(phi_x, np.dot(Sigma, phi_x))
+        return mean, np.sqrt(sigma)
+
+    return predict
+
+# Define prediction function for the new dataset
+f_pred_hole = closed_form(phi_linear, X_train_hole, y_train_hole, ALPHA, BETA)
+
+# Predict on test points
+y_pred_hole = np.array([f_pred_hole(x)[0] for x in X_test_hole])
+std_pred_hole = np.array([f_pred_hole(x)[1] for x in X_test_hole])
+
+# Visualization function adapted for the current context
+def plot_results_hole(X_train, y_train, X_test, y_test, y_pred, std_pred, xmin, xmax, ymin, ymax, stdmin, stdmax):
+    plt.figure(figsize=(15, 5))
+    plt.subplot(121)
+    plt.xlim(xmin=xmin, xmax=xmax)
+    plt.ylim(ymin=ymin, ymax=ymax)
+    plt.plot(X_test, y_test, color='green', linewidth=2, label="Ground Truth")
+    plt.plot(X_train, y_train, 'o', color='blue', label='Training points')
+    plt.plot(X_test, y_pred, color='red', label="Predictions")
+    plt.fill_between(X_test, y_pred - std_pred, y_pred + std_pred, color='salmon', alpha=0.5, label='Predictive std. dev.')
+    plt.legend()
+
+    plt.subplot(122)
+    plt.title("Predictive variance along x-axis")
+    plt.xlim(xmin=xmin, xmax=xmax)
+    plt.ylim(ymin=stdmin, ymax=stdmax)
+    plt.plot(X_test, std_pred ** 2, color='red', label="Variance")
+    plt.legend()
+    plt.show()
+
+# Plot results
+plot_results_hole(X_train_hole, y_train_hole, X_test_hole, y_test_hole, y_pred_hole, std_pred_hole,
+                  xmin=-12, xmax=12, ymin=-7, ymax=6, stdmin=0.0, stdmax=0.5)
