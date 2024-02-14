@@ -288,3 +288,4 @@ def plot_results_hole(X_train, y_train, X_test, y_test, y_pred, std_pred, xmin, 
 # Plot results
 plot_results_hole(X_train_hole, y_train_hole, X_test_hole, y_test_hole, y_pred_hole, std_pred_hole,
                   xmin=-12, xmax=12, ymin=-7, ymax=6, stdmin=0.0, stdmax=0.5)
+# to delete
