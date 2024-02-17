@@ -285,9 +285,65 @@ def phi_polynomial(x, degree=NB_POLYNOMIAL_FEATURES):
     # Compute the polynomial terms x^0, x^1, ..., x^(D-1)
     return np.array([x**i for i in range(degree)])
 
+# Re-defining the sinusoidal dataset generation and plotting function as they are not in the current context.
 
+# Hyperparameters for non-linear model
+SIG = 0.2
+ALPHA = 0.05
+NB_POINTS = 50
+NB_POLYNOMIAL_FEATURES = 10
 
+# Define the closed_form function for polynomial features
+def closed_form_polynomial(X_train, y_train, alpha, beta, degree=NB_POLYNOMIAL_FEATURES):
+    """ Analytical solution to Bayesian Linear Regression with polynomial features.
 
+    Args:
+      X_train: (array) train inputs, size (N,)
+      y_train: (array) train labels, size (N,)
+      alpha: (float) prior precision parameter
+      beta: (float) noise precision parameter
+      degree: (int) the degree of the polynomial features
 
+    Returns:
+      (function) prediction function, returning both mean and std
+    """
+    # Compute design matrix Φ using polynomial basis function
+    Phi = np.array([phi_polynomial(x, degree) for x in X_train])
+    # Compute S and mu for the posterior distribution
+    S_inv = alpha * np.eye(degree) + beta * Phi.T @ Phi
+    S = np.linalg.inv(S_inv)
+    mu = beta * S @ Phi.T @ y_train
+
+    def f_model(x):
+        # Compute the feature vector for the new input x*
+        phi_x = phi_polynomial(x, degree).reshape(-1, 1)
+        # Compute the mean and standard deviation of the predictive distribution
+        mean = mu.T @ phi_x
+        sigma = 1 / beta + phi_x.T @ S @ phi_x
+        return mean.item(), np.sqrt(sigma.item())
+
+    return f_model
+
+# Define f_pred as the closed form for polynomial features with the sinusoidal dataset
+f_pred_poly = closed_form_polynomial(dataset_sinus['X_train'], dataset_sinus['y_train'],
+                                     dataset_sinus['ALPHA'], dataset_sinus['BETA'],
+                                     degree=NB_POLYNOMIAL_FEATURES)
+
+# Predict test points using the new predictive function
+y_pred_poly = []
+std_pred_poly = []
+for x in dataset_sinus['X_test']:
+    mean, std = f_pred_poly(x)
+    y_pred_poly.append(mean)
+    std_pred_poly.append(std)
+
+# Convert predictions to numpy arrays for plotting
+y_pred_poly = np.array(y_pred_poly)
+std_pred_poly = np.array(std_pred_poly)
+
+# Use the visualization function to plot the results
+plot_results(dataset_sinus['X_train'], dataset_sinus['y_train'], dataset_sinus['X_test'],
+             dataset_sinus['y_test'], y_pred_poly, std_pred_poly,
+             xmin=-1, xmax=2, ymin=-3, ymax=5, stdmin=0, stdmax=10)
 
 # Predictive variance increase as we move away from training data. However here with polynomial features, the minimum is not the training barycentre anymore.
