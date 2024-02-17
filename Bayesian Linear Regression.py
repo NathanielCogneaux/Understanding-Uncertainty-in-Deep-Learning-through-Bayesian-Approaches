@@ -347,3 +347,83 @@ plot_results(dataset_sinus['X_train'], dataset_sinus['y_train'], dataset_sinus['
              xmin=-1, xmax=2, ymin=-3, ymax=5, stdmin=0, stdmax=10)
 
 # Predictive variance increase as we move away from training data. However here with polynomial features, the minimum is not the training barycentre anymore.
+
+# Define the hyperparameters for Gaussian basis functions
+MU_MIN = 0
+MU_MAX = 1
+NB_GAUSSIAN_FEATURES = 9  # D-1, assuming we want D Gaussian features
+
+# Define the Gaussian basis function
+def phi_gaussian(x, MU_MIN=MU_MIN, MU_MAX=MU_MAX, NB_GAUSSIAN_FEATURES=NB_GAUSSIAN_FEATURES):
+    """ Gaussian Basis Functions defined linearly between
+    MU_MIN (=mu_0) and MU_MAX (=mu_{D-1})
+
+    Args:
+      x: (float) scalar input
+
+    Returns:
+      (1D-array) gaussian features of x
+    """
+    # Spacing for means of the Gaussian functions
+    mus = np.linspace(MU_MIN, MU_MAX, NB_GAUSSIAN_FEATURES)
+    # Standard deviation for the Gaussian functions
+    s = (MU_MAX - MU_MIN) / NB_GAUSSIAN_FEATURES
+
+    # Compute the Gaussian basis functions
+    return np.exp(-0.5 * ((x - mus) ** 2) / s ** 2)
+
+# Define the closed_form function for Gaussian features
+def closed_form_gaussian(X_train, y_train, alpha, beta, MU_MIN, MU_MAX, NB_GAUSSIAN_FEATURES):
+    """ Analytical solution to Bayesian Linear Regression with Gaussian features.
+
+    Args:
+      X_train: (array) train inputs, size (N,)
+      y_train: (array) train labels, size (N,)
+      alpha: (float) prior precision parameter
+      beta: (float) noise precision parameter
+      MU_MIN: (float) minimum mean for Gaussian features
+      MU_MAX: (float) maximum mean for Gaussian features
+      NB_GAUSSIAN_FEATURES: (int) number of Gaussian features
+
+    Returns:
+      (function) prediction function, returning both mean and std
+    """
+    # Compute design matrix Φ using Gaussian basis function
+    Phi = np.array([phi_gaussian(x, MU_MIN, MU_MAX, NB_GAUSSIAN_FEATURES) for x in X_train])
+    # Compute S and mu for the posterior distribution
+    S_inv = alpha * np.eye(NB_GAUSSIAN_FEATURES) + beta * Phi.T @ Phi
+    S = np.linalg.inv(S_inv)
+    mu = beta * S @ Phi.T @ y_train
+
+    def f_model(x):
+        # Compute the feature vector for the new input x*
+        phi_x = phi_gaussian(x, MU_MIN, MU_MAX, NB_GAUSSIAN_FEATURES).reshape(-1, 1)
+        # Compute the mean and standard deviation of the predictive distribution
+        mean = mu.T @ phi_x
+        sigma = 1 / beta + phi_x.T @ S @ phi_x
+        return mean.item(), np.sqrt(sigma.item())
+
+    return f_model
+
+# Initialize predictive function for Gaussian features with the sinusoidal dataset
+f_pred_gauss = closed_form_gaussian(dataset_sinus['X_train'], dataset_sinus['y_train'],
+                                    dataset_sinus['ALPHA'], dataset_sinus['BETA'],
+                                    MU_MIN, MU_MAX, NB_GAUSSIAN_FEATURES)
+
+# Predict test points using the new predictive function
+y_pred_gauss = []
+std_pred_gauss = []
+for x in dataset_sinus['X_test']:
+    mean, std = f_pred_gauss(x)
+    y_pred_gauss.append(mean)
+    std_pred_gauss.append(std)
+
+# Convert predictions to numpy arrays for plotting
+y_pred_gauss = np.array(y_pred_gauss)
+std_pred_gauss = np.array(std_pred_gauss)
+
+# Use the visualization function to plot the results
+plot_results(dataset_sinus['X_train'], dataset_sinus['y_train'], dataset_sinus['X_test'],
+             dataset_sinus['y_test'], y_pred_gauss, std_pred_gauss,
+             xmin=-1, xmax=2, ymin=-2, ymax=3, stdmin=0.05, stdmax=0.2)
+
