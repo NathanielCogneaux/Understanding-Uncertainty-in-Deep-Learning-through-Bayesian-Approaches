@@ -145,17 +145,7 @@ def closed_form(func, X_train, y_train, alpha, beta):
 
     return f_model
 
-# Initialize predictive function
-f_pred = closed_form(phi_linear, dataset_linear['X_train'], dataset_linear['y_train'],
-                     dataset_linear['ALPHA'], dataset_linear['BETA'])
 
-#@title **[CODING TASK]** Predict on test dataset and visualize results
-
-# ============ YOUR CODE HERE ============
-# Predict test points and use visualization function
-# defined at the beginning of the notebook
-# You should use the following parameters for plot_results
-# xmin=-10, xmax=10, ymin=-6, ymax=6, stdmin=0.05, stdmax=1
 
 # Initialize predictive function
 f_pred = closed_form(phi_linear, dataset_linear['X_train'], dataset_linear['y_train'],
@@ -198,37 +188,8 @@ plt.legend()
 plt.show()
 
 
-#Redefine the parameters
-SIG = 0.2
-ALPHA = 2.0
-BETA = 1/(2.0*SIG**2)
-
-# Define the linear basis function
-def phi_linear(x):
-    """ Linear Basis Functions
-
-    Args:
-      x: (float) scalar input
-
-    Returns:
-      (1D array) linear features of x
-    """
-    return np.array([1, x])
-
 # Define the closed_form function
 def closed_form(func, X_train, y_train, alpha, beta):
-    """ Analytical solution to Bayesian Linear Regression.
-
-    Args:
-      func: (function) the basis function used
-      X_train: (array) train inputs, size (N,)
-      y_train: (array) train labels, size (N,)
-      alpha: (float) prior precision parameter
-      beta: (float) noise precision parameter
-
-    Returns:
-      (function) prediction function, returning both mean and std
-    """
     Phi = np.array([func(x) for x in X_train])
     S_inv = alpha * np.eye(Phi.shape[1]) + beta * Phi.T @ Phi
     S = np.linalg.inv(S_inv)
@@ -295,18 +256,6 @@ NB_POLYNOMIAL_FEATURES = 10
 
 # Define the closed_form function for polynomial features
 def closed_form_polynomial(X_train, y_train, alpha, beta, degree=NB_POLYNOMIAL_FEATURES):
-    """ Analytical solution to Bayesian Linear Regression with polynomial features.
-
-    Args:
-      X_train: (array) train inputs, size (N,)
-      y_train: (array) train labels, size (N,)
-      alpha: (float) prior precision parameter
-      beta: (float) noise precision parameter
-      degree: (int) the degree of the polynomial features
-
-    Returns:
-      (function) prediction function, returning both mean and std
-    """
     # Compute design matrix Φ using polynomial basis function
     Phi = np.array([phi_polynomial(x, degree) for x in X_train])
     # Compute S and mu for the posterior distribution
@@ -355,15 +304,6 @@ NB_GAUSSIAN_FEATURES = 9  # D-1, assuming we want D Gaussian features
 
 # Define the Gaussian basis function
 def phi_gaussian(x, MU_MIN=MU_MIN, MU_MAX=MU_MAX, NB_GAUSSIAN_FEATURES=NB_GAUSSIAN_FEATURES):
-    """ Gaussian Basis Functions defined linearly between
-    MU_MIN (=mu_0) and MU_MAX (=mu_{D-1})
-
-    Args:
-      x: (float) scalar input
-
-    Returns:
-      (1D-array) gaussian features of x
-    """
     # Spacing for means of the Gaussian functions
     mus = np.linspace(MU_MIN, MU_MAX, NB_GAUSSIAN_FEATURES)
     # Standard deviation for the Gaussian functions
@@ -374,20 +314,6 @@ def phi_gaussian(x, MU_MIN=MU_MIN, MU_MAX=MU_MAX, NB_GAUSSIAN_FEATURES=NB_GAUSSI
 
 # Define the closed_form function for Gaussian features
 def closed_form_gaussian(X_train, y_train, alpha, beta, MU_MIN, MU_MAX, NB_GAUSSIAN_FEATURES):
-    """ Analytical solution to Bayesian Linear Regression with Gaussian features.
-
-    Args:
-      X_train: (array) train inputs, size (N,)
-      y_train: (array) train labels, size (N,)
-      alpha: (float) prior precision parameter
-      beta: (float) noise precision parameter
-      MU_MIN: (float) minimum mean for Gaussian features
-      MU_MAX: (float) maximum mean for Gaussian features
-      NB_GAUSSIAN_FEATURES: (int) number of Gaussian features
-
-    Returns:
-      (function) prediction function, returning both mean and std
-    """
     # Compute design matrix Φ using Gaussian basis function
     Phi = np.array([phi_gaussian(x, MU_MIN, MU_MAX, NB_GAUSSIAN_FEATURES) for x in X_train])
     # Compute S and mu for the posterior distribution
