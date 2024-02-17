@@ -49,6 +49,7 @@ def plot_results(X_train, y_train, X_test, y_test, y_pred, std_pred,
 SIG = 0.2
 ALPHA = 2.0
 NB_POINTS =25
+BETA = 1/(2.0*SIG**2)
 
 # Generate linear toy dataset
 def f_linear(x, noise_amount, sigma):
@@ -253,6 +254,32 @@ SIG = 0.2
 ALPHA = 0.05
 NB_POINTS = 50
 NB_POLYNOMIAL_FEATURES = 10
+
+# Generate sinusoidal toy dataset
+def f_sinus(x, noise_amount,sigma=0.2):
+    y = np.sin(2*np.pi*x) + x
+    noise = np.random.normal(0, sigma, len(x))
+    return y + noise_amount * noise
+
+# Create training and test points
+dataset_sinus = {}
+dataset_sinus['X_train'] = np.random.uniform(0, 1, NB_POINTS)
+dataset_sinus['y_train'] = f_sinus(dataset_sinus['X_train'], noise_amount=1,sigma=SIG)
+dataset_sinus['X_test'] = np.linspace(-1,2, 10*NB_POINTS)
+dataset_sinus['y_test'] = f_sinus(dataset_sinus['X_test'], noise_amount=0,sigma=SIG)
+dataset_sinus['ALPHA'] = ALPHA
+dataset_sinus['BETA'] = 1/(2.0*SIG**2)
+
+# Plot dataset
+plt.figure(figsize=(7,5))
+plt.xlim(xmin =-1, xmax = 2)
+plt.ylim(ymin = -2, ymax = 3)
+plt.plot(dataset_sinus['X_test'], dataset_sinus['y_test'], color='green', linewidth=2,
+         label="Ground Truth")
+plt.plot(dataset_sinus['X_train'], dataset_sinus['y_train'], 'o', color='blue', label='Training points')
+plt.legend()
+plt.show()
+
 
 # Define the closed_form function for polynomial features
 def closed_form_polynomial(X_train, y_train, alpha, beta, degree=NB_POLYNOMIAL_FEATURES):
