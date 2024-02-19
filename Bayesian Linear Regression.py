@@ -212,8 +212,6 @@ plot_results(dataset_hole['X_train'], dataset_hole['y_train'], dataset_hole['X_t
 
 # PART II : NON LINEAR MODELS
 
-#@title **[CODING TASK]** Define basis function
-
 # Define the hyperparameters
 NB_POLYNOMIAL_FEATURES = 10
 
