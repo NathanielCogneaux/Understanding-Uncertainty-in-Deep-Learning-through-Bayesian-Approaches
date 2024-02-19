@@ -170,14 +170,14 @@ plot_results(dataset_linear['X_train'], dataset_linear['y_train'],
              y_pred, std_pred, xmin=-10, xmax=10, ymin=-6, ymax=6, stdmin=0.05, stdmax=1)
 
 
-# Create training and test points
+# Create new training and test points with two blocks of points with a hole separating them
 dataset_hole = {}
 dataset_hole['X_train'] = np.concatenate(([np.random.uniform(-3, -1, 10), np.random.uniform(1, 3, 10)]), axis=0)
 dataset_hole['y_train'] = f_linear(dataset_hole['X_train'], noise_amount=1,sigma=SIG)
 dataset_hole['X_test'] = np.linspace(-12,12, 100)
 dataset_hole['y_test'] = f_linear(dataset_hole['X_test'], noise_amount=0,sigma=SIG)
 dataset_hole['ALPHA'] = ALPHA
-dataset_hole['BETA'] = 1/(2.0*SIG**2)
+dataset_hole['BETA'] = BETA
 
 # Plot dataset
 plt.figure(figsize=(7,5))
@@ -187,31 +187,6 @@ plt.plot(dataset_hole['X_test'], dataset_hole['y_test'], color='green', linewidt
 plt.plot(dataset_hole['X_train'], dataset_hole['y_train'], 'o', color='blue', label='Training points')
 plt.legend()
 plt.show()
-
-
-# Define the closed_form function
-def closed_form(func, X_train, y_train, alpha, beta):
-    Phi = np.array([func(x) for x in X_train])
-    S_inv = alpha * np.eye(Phi.shape[1]) + beta * Phi.T @ Phi
-    S = np.linalg.inv(S_inv)
-    mu = beta * S @ Phi.T @ y_train
-
-    def f_model(x):
-        phi_x = np.array(func(x)).reshape(-1, 1)
-        mean = mu.T @ phi_x
-        sigma = 1 / beta + phi_x.T @ S @ phi_x
-        return mean.item(), np.sqrt(sigma.item())
-
-    return f_model
-
-# Generate dataset with a hole
-dataset_hole = {}
-dataset_hole['X_train'] = np.concatenate((np.random.uniform(-3, -1, 10), np.random.uniform(1, 3, 10)), axis=0)
-dataset_hole['y_train'] = f_linear(dataset_hole['X_train'], noise_amount=1, sigma=SIG)
-dataset_hole['X_test'] = np.linspace(-12, 12, 100)
-dataset_hole['y_test'] = f_linear(dataset_hole['X_test'], noise_amount=0, sigma=SIG)
-dataset_hole['ALPHA'] = ALPHA
-dataset_hole['BETA'] = BETA
 
 # Initialize predictive function for dataset_hole
 f_pred_hole = closed_form(phi_linear, dataset_hole['X_train'], dataset_hole['y_train'],
