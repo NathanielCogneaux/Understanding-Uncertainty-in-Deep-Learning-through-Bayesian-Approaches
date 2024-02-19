@@ -215,12 +215,12 @@ plot_results(dataset_hole['X_train'], dataset_hole['y_train'], dataset_hole['X_t
 # Define the hyperparameters
 NB_POLYNOMIAL_FEATURES = 10
 
-# Redefine the polynomial basis function with the hyperparameter
+# Define the polynomial basis function with the hyperparameter
 def phi_polynomial(x, degree=NB_POLYNOMIAL_FEATURES):
     # Compute the polynomial terms x^0, x^1, ..., x^(D-1)
     return np.array([x**i for i in range(degree)])
 
-# Re-defining the sinusoidal dataset generation and plotting function as they are not in the current context.
+# Define the sinusoidal dataset generation and plotting function as they are not in the current context.
 
 # Hyperparameters for non-linear model
 SIG = 0.2
@@ -294,8 +294,6 @@ std_pred_poly = np.array(std_pred_poly)
 plot_results(dataset_sinus['X_train'], dataset_sinus['y_train'], dataset_sinus['X_test'],
              dataset_sinus['y_test'], y_pred_poly, std_pred_poly,
              xmin=-1, xmax=2, ymin=-3, ymax=5, stdmin=0, stdmax=10)
-
-# Predictive variance increase as we move away from training data. However here with polynomial features, the minimum is not the training barycentre anymore.
 
 # Define the hyperparameters for Gaussian basis functions
 MU_MIN = 0
