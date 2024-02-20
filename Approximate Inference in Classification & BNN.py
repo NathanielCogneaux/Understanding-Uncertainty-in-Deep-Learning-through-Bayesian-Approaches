@@ -177,3 +177,10 @@ print(hess_weights)
 print("Covariance Matrix (Sigma_laplace):")
 print(Sigma_laplace)
 
+# Defining posterior distribution
+laplace_posterior = np.random.multivariate_normal(w_map.reshape(2,), Sigma_laplace, NB_SAMPLES)
+
+# Plotting results
+fig, ax = plt.subplots(figsize=(7,7))
+plot_decision_boundary(net, X, y, epoch, ((output.squeeze()>=0.5) == y).float().mean(), model_type='laplace',
+                       tloc=TEXT_LOCATION, nsamples=NB_SAMPLES, posterior=laplace_posterior)
