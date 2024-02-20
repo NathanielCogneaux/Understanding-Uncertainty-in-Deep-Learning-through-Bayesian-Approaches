@@ -140,3 +140,40 @@ for epoch in range(20):  # loop over the dataset multiple times
     print(f'Epoch {epoch + 1}, Loss: {running_loss:.4f}, Accuracy: {accuracy:.4f}')
 
 print('Finished Training')
+
+# Extracting weights as μ_lap from the trained logistic regression model
+# Assuming the linear layer in the logistic regression model is named 'fc'
+w_map = net.state_dict()['fc.weight'].detach().numpy()
+
+# Printing the extracted weights
+print("Extracted μ_lap (weights w_MAP):")
+print(w_map)
+
+# Computing first derivative w.r.t to model's weights
+optimizer.zero_grad()
+output = net(X).squeeze()
+loss = criterion(output, y) + net.fc.weight.norm()**2
+gradf_weight = grad(loss, net.fc.weight, create_graph=True)[0]
+
+# Compute the Hessian from the previous derivative
+
+# Initialize a matrix to hold the Hessian
+hess_weights = torch.zeros(net.fc.weight.shape[1], net.fc.weight.shape[1])
+
+for i in range(net.fc.weight.shape[1]):
+    # Compute the gradient of each element of the gradient w.r.t. weights again
+    grad2_weight = grad(gradf_weight[0, i], net.fc.weight, create_graph=True)[0]
+
+    # Store the results in the Hessian matrix
+    hess_weights[i] = grad2_weight.squeeze().detach()
+
+# Compute the covariance matrix by inverting the Hessian
+# Add a small value to the diagonal before inverting to ensure numerical stability
+I = torch.eye(hess_weights.shape[0])
+Sigma_laplace = torch.inverse(hess_weights + 1e-4 * I).numpy()
+
+print("Hessian Matrix:")
+print(hess_weights)
+print("Covariance Matrix (Sigma_laplace):")
+print(Sigma_laplace)
+
