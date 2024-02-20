@@ -77,4 +77,16 @@ train_dataloader = data.DataLoader(torch_train_dataset, batch_size=len(torch_tra
 plt.scatter(X[:,0], X[:,1], c=y, cmap='Paired_r', edgecolors='k')
 plt.show()
 
+# I.1 Maximum-A-Posteriori Estimate
+
+class LogisticRegression(nn.Module):
+  """ A Logistic Regression Model with sigmoid output in Pytorch"""
+  def __init__(self, input_size):
+    super().__init__()
+    self.fc = nn.Linear(input_size, 1)
+
+  def forward(self, x):
+    out = self.fc(x)
+    return torch.sigmoid(out)
+
 
