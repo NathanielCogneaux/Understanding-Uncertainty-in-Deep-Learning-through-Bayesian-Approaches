@@ -90,3 +90,53 @@ class LogisticRegression(nn.Module):
     return torch.sigmoid(out)
 
 
+# Train a Logistic Regression model with stochastic gradient descent for 20 epochs.
+
+net = LogisticRegression(input_size=X.shape[1])
+net.train()
+criterion = nn.BCELoss()
+
+# L2 regularization is included in Pytorch's optimizer implementation
+# as "weigth_decay" option
+optimizer = torch.optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=WEIGHT_DECAY)
+
+fig, ax = plt.subplots(figsize=(7,7))
+
+for epoch in range(20):  # loop over the dataset multiple times
+    running_loss = 0.0
+    for i, data in enumerate(train_dataloader, 0):
+        # Get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data
+
+        # Zero the parameter gradients
+        optimizer.zero_grad()
+
+        # Forward pass
+        outputs = net(inputs)
+
+        # Compute the loss
+        loss = criterion(outputs, labels.unsqueeze(1))
+
+        # Backward pass
+        loss.backward()
+
+        # Optimize
+        optimizer.step()
+
+        # Print statistics
+        running_loss += loss.item()
+
+    # Calculate accuracy
+    with torch.no_grad():
+        output = net(X)
+        predicted = (output >= 0.5).float()
+        total = y.size(0)
+        correct = (predicted.squeeze() == y).sum().item()
+        accuracy = correct / total
+
+    # For plotting and showing learning process at each epoch
+    plot_decision_boundary(net, X.numpy(), y.numpy(), epoch, accuracy,
+                           model_type='classic', tloc=TEXT_LOCATION)
+    print(f'Epoch {epoch + 1}, Loss: {running_loss:.4f}, Accuracy: {accuracy:.4f}')
+
+print('Finished Training')
