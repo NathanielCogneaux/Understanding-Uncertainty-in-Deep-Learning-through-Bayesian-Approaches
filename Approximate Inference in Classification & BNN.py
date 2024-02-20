@@ -61,7 +61,20 @@ def plot_decision_boundary(model, X, Y, epoch, accuracy, model_type='classic',
     display.display(plt.gcf())
     display.clear_output(wait=True)
 
-# Hyperparameters for model and approximate inference { form-width: "30%" }
+# Hyperparameters for model and approximate inference
 WEIGHT_DECAY = 5e-2
 NB_SAMPLES = 400
 TEXT_LOCATION = (-5,-7)
+
+# Load linear dataset
+X, y = make_blobs(n_samples=NB_SAMPLES, centers=[(-2,-2),(2,2)], cluster_std=0.80, n_features=2)
+X, y = torch.from_numpy(X), torch.from_numpy(y)
+X, y = X.type(torch.float), y.type(torch.float)
+torch_train_dataset = data.TensorDataset(X,y) # create your datset
+train_dataloader = data.DataLoader(torch_train_dataset, batch_size=len(torch_train_dataset))
+
+# Visualize dataset
+plt.scatter(X[:,0], X[:,1], c=y, cmap='Paired_r', edgecolors='k')
+plt.show()
+
+
