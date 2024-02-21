@@ -314,36 +314,57 @@ plt.show()
 
 # II.1 Variational Inference with Bayesian Neural Networks
 
-#@title **[CODING TASK]** Implement a Variational MLP
+# Implement a Variational MLP
 
 class VariationalMLP(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size=1):
-        super(VariationalMLP, self).__init__()
-
-        # Initialize KL divergence accumulation mechanism
-        # This might be a simple attribute or a more complex mechanism depending on the implementation
-        self.kl_loss = KL()  # Assuming KL is a class that accumulates KL divergence
-
-        # Define the variational layers
-        self.hidden_layer = LinearVariational(input_size, hidden_size, self)
-        self.output_layer = LinearVariational(hidden_size, output_size, self)
+    def __init__(self, input_size, hidden_size):
+        super().__init__()
+        self.kl_loss = KL()
+        self.fc_hidden_var = LinearVariational(input_size, hidden_size, self.kl_loss)
+        self.fc_out_var = LinearVariational(hidden_size, 1, self.kl_loss)
 
     @property
     def accumulated_kl_div(self):
-        # Returns the accumulated KL divergence
         return self.kl_loss.accumulated_kl_div
 
     def reset_kl_div(self):
-        # Resets the accumulated KL divergence to zero
         self.kl_loss.accumulated_kl_div = 0
 
     def forward(self, x):
-        # Forward pass through the hidden layer with ReLU activation
-        x = F.relu(self.hidden_layer(x))
-        # Forward pass through the output layer with sigmoid activation
-        x = torch.sigmoid(self.output_layer(x))
-        return x
+        x = F.relu(self.fc_hidden_var(x))  # Apply ReLU activation function after the hidden layer
+        out = torch.sigmoid(self.fc_out_var(x))  # Apply the sigmoid function to the output layer
+        return out
+
+# We can now train our variational model as any other network in Pytorch
+
+var_net = VariationalMLP(input_size=X.shape[1], hidden_size=50)
+var_net.train()
+optimizer = torch.optim.Adam(var_net.parameters(), lr=0.1, weight_decay=WEIGHT_DECAY)
+fig, ax = plt.subplots(figsize=(7,7))
+
+for epoch in range(1000):  # loop over the dataset multiple times
+    # zero the parameter gradients
+    optimizer.zero_grad()
+    var_net.reset_kl_div()
+
+    # forward + backward + optimize
+    output = var_net(X).squeeze()
+    loss = elbo(output, y, var_net)
+    loss.backward()
+    optimizer.step()
+
+    # For plotting and showing learning process at each epoch
+    if (epoch+1)%50==0:
+      # Computing prediction for visualization purpose
+      preds = torch.zeros(NB_SAMPLES, X.shape[0], 1)
+      for i in range(NB_SAMPLES):
+          preds[i] = var_net(X)
+      pred = preds.mean(0).squeeze()
+      accuracy = ((pred>=0.5) == y).float().mean()
+
+      plot_decision_boundary(var_net, X, y, epoch, accuracy, model_type='vi', tloc=TEXT_LOCATION)
 
 
-
-# II.1 Variational Inference with Bayesian Neural Networks
+# II.2 Monte Carlo Dropout
+# Implement a MLP with dropout (p=0.2)
+# We code MLP with 1 hidden layer and a dropout layer. The dropout layer is also activated during test time.
