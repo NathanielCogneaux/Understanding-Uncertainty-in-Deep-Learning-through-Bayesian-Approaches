@@ -141,6 +141,8 @@ for epoch in range(20):  # loop over the dataset multiple times
 
 print('Finished Training')
 
+# I.2 Laplace Approximation
+
 # Extracting weights as μ_lap from the trained logistic regression model
 # Assuming the linear layer in the logistic regression model is named 'fc'
 w_map = net.state_dict()['fc.weight'].detach().numpy()
@@ -184,3 +186,45 @@ laplace_posterior = np.random.multivariate_normal(w_map.reshape(2,), Sigma_lapla
 fig, ax = plt.subplots(figsize=(7,7))
 plot_decision_boundary(net, X, y, epoch, ((output.squeeze()>=0.5) == y).float().mean(), model_type='laplace',
                        tloc=TEXT_LOCATION, nsamples=NB_SAMPLES, posterior=laplace_posterior)
+
+# I.3 Variational Inference
+
+# Implement a variational layer from scratch
+
+class LinearVariational(nn.Module):
+    """
+    Mean field approximation of nn.Linear
+    """
+    def __init__(self, input_size, output_size, parent):
+        super().__init__()
+        self.parent = parent
+
+        if getattr(parent, 'accumulated_kl_div', None) is None:
+            parent.accumulated_kl_div = 0
+
+        # Initialize the variational parameters for weight and bias
+        self.w_mu = nn.Parameter(torch.zeros(output_size, input_size))
+        self.w_rho = nn.Parameter(torch.ones(output_size, input_size))
+        self.b_mu = nn.Parameter(torch.zeros(output_size))
+        self.b_rho = nn.Parameter(torch.ones(output_size))
+
+    def sampling(self, mu, rho):
+        epsilon = torch.randn_like(mu)
+        sigma = torch.log1p(torch.exp(rho))  # softplus to ensure positive standard deviation
+        return mu + sigma * epsilon
+
+    def kl_divergence(self, z, mu_theta, rho_theta, prior_sd=1):
+        log_prior = dist.Normal(0, prior_sd).log_prob(z)
+        log_p_q = dist.Normal(mu_theta, torch.log1p(torch.exp(rho_theta))).log_prob(z)
+        return (log_p_q - log_prior).sum() / X.shape[0]
+
+    def forward(self, x):
+        w = self.sampling(self.w_mu, self.w_rho)
+        b = self.sampling(self.b_mu, self.b_rho)
+        out = F.linear(x, w, b)
+
+        # Compute KL-div loss for training
+        self.parent.accumulated_kl_div += self.kl_divergence(w, self.w_mu, self.w_rho)
+        self.parent.accumulated_kl_div += self.kl_divergence(b, self.b_mu, self.b_rho)
+
+        return out
