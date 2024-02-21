@@ -144,7 +144,6 @@ print('Finished Training')
 # I.2 Laplace Approximation
 
 # Extracting weights as μ_lap from the trained logistic regression model
-# Assuming the linear layer in the logistic regression model is named 'fc'
 w_map = net.state_dict()['fc.weight'].detach().numpy()
 
 # Printing the extracted weights
@@ -297,8 +296,8 @@ TEXT_LOCATION = (-1.5, -1.5)
 from torch.utils import data as torch_data  # Renamed to avoid conflict
 from sklearn.datasets import make_moons
 
-# Assuming NOISE_MOON is defined somewhere in your code
-NOISE_MOON = 0.3  # Example noise level, adjust as needed
+
+NOISE_MOON = 0.3
 
 # Load two moons dataset
 X, y = make_moons(n_samples=1000, noise=NOISE_MOON)
@@ -335,7 +334,6 @@ class VariationalMLP(nn.Module):
         out = torch.sigmoid(self.fc_out_var(x))  # Apply the sigmoid function to the output layer
         return out
 
-# We can now train our variational model as any other network in Pytorch
 
 var_net = VariationalMLP(input_size=X.shape[1], hidden_size=50)
 var_net.train()
