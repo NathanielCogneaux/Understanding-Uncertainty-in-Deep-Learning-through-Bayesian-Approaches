@@ -228,3 +228,91 @@ class LinearVariational(nn.Module):
         self.parent.accumulated_kl_div += self.kl_divergence(b, self.b_mu, self.b_rho)
 
         return out
+
+# Now, let's use this LinearVariational layer in a Logistic regression model.
+class KL:
+    accumulated_kl_div = 0
+
+class VariationalLogisticRegression(nn.Module):
+    def __init__(self, input_size):
+        super().__init__()
+        self.kl_loss = KL
+        self.fc_var =  LinearVariational(input_size, 1, self.kl_loss)
+
+    @property
+    def accumulated_kl_div(self):
+        return self.kl_loss.accumulated_kl_div
+
+    def reset_kl_div(self):
+        self.kl_loss.accumulated_kl_div = 0
+
+    def forward(self, x):
+        out = self.fc_var(x)
+        return torch.sigmoid(out)
+
+
+def elbo(input, target, model):
+  negative_log_likelihood = -dist.Binomial(logits=input).log_prob(target).sum()
+  return negative_log_likelihood + model.accumulated_kl_div
+
+
+# We can now train our variational model as any other network in Pytorch
+
+var_net = VariationalLogisticRegression(input_size=X.shape[1])
+var_net.train()
+optimizer = torch.optim.Adam(var_net.parameters(), lr=0.1,  weight_decay=WEIGHT_DECAY)
+fig, ax = plt.subplots(figsize=(7,7))
+
+for epoch in range(30):  # loop over the dataset multiple times
+    # zero the parameter gradients
+    optimizer.zero_grad()
+    var_net.reset_kl_div()
+
+    # forward + backward + optimize
+    output = var_net(X).squeeze()
+    loss = elbo(output, y, var_net)
+    loss.backward()
+    optimizer.step()
+
+    # Computing prediction for visualization purpose
+    preds = torch.zeros(NB_SAMPLES, X.shape[0], 1)
+    for i in range(NB_SAMPLES):
+        preds[i] = var_net(X)
+    pred = preds.mean(0).squeeze()
+    accuracy = ((pred>=0.5) == y).float().mean()
+
+    # For plotting and showing learning process at each epoch
+    plot_decision_boundary(var_net, X, y, epoch, accuracy, model_type='vi', tloc=TEXT_LOCATION)
+
+
+# II: Bayesian Neural Networks
+
+# Hyperparameters for model and approximate inference
+
+NOISE_MOON = 0.05
+WEIGHT_DECAY = 5e-2
+NB_SAMPLES = 100
+TEXT_LOCATION = (-1.5, -1.5)
+
+from torch.utils import data as torch_data  # Renamed to avoid conflict
+from sklearn.datasets import make_moons
+
+# Assuming NOISE_MOON is defined somewhere in your code
+NOISE_MOON = 0.3  # Example noise level, adjust as needed
+
+# Load two moons dataset
+X, y = make_moons(n_samples=1000, noise=NOISE_MOON)
+X, y = torch.from_numpy(X), torch.from_numpy(y)
+X, y = X.type(torch.float), y.type(torch.float)
+torch_train_dataset = torch_data.TensorDataset(X, y)
+train_dataloader = torch_data.DataLoader(torch_train_dataset, batch_size=len(torch_train_dataset))
+N_DIM = X.shape[1]
+
+# Visualize dataset
+plt.scatter(X[:,0], X[:,1], c=y, cmap='Paired_r', edgecolors='k')
+plt.show()
+
+# II.1 Variational Inference with Bayesian Neural Networks
+
+
+# II.1 Variational Inference with Bayesian Neural Networks
