@@ -368,3 +368,55 @@ for epoch in range(1000):  # loop over the dataset multiple times
 # II.2 Monte Carlo Dropout
 # Implement a MLP with dropout (p=0.2)
 # We code MLP with 1 hidden layer and a dropout layer. The dropout layer is also activated during test time.
+
+class MLP(nn.Module):
+    """PyTorch MLP for binary classification model with an added dropout layer"""
+    def __init__(self, input_size, hidden_size, dropout_rate=0.2):
+        super().__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)  # First linear layer
+        self.dropout = dropout_rate  # Dropout rate
+        self.fc2 = nn.Linear(hidden_size, 1)  # Output layer
+
+    def forward(self, x, apply_dropout=False):
+        x = F.relu(self.fc1(x))  # Apply ReLU to the output of the first layer
+        if apply_dropout:
+            # Apply dropout during both training and test time for MC dropout
+            x = F.dropout(x, p=self.dropout, training=True)
+        else:
+            # Apply dropout only during training (standard behavior)
+            x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.fc2(x)  # Pass the output through the second linear layer
+        return torch.sigmoid(x)  # Apply sigmoid activation function
+
+
+# Note: When using this model for Monte Carlo predictions, you can call model.forward(x, apply_dropout=True)
+# to ensure dropout is applied during inference, allowing you to perform multiple forward passes to simulate
+# the predictive distribution.
+
+# We train our model as usual:
+
+net = MLP(input_size=X.shape[1], hidden_size=50)
+net.train()
+criterion = nn.BCELoss()
+optimizer = torch.optim.Adam(net.parameters(), lr=0.01)
+fig, ax = plt.subplots(figsize=(7,7))
+
+for epoch in range(500):  # loop over the dataset multiple times
+
+    # zero the parameter gradients
+    optimizer.zero_grad()
+
+    # forward + backward + optimize
+    output = net(X).squeeze()
+    loss = criterion(output, y)
+    loss.backward()
+    optimizer.step()
+
+    # For plotting and showing learning process at each epoch, uncomment and indent line below
+    if (epoch+1)%50==0:
+      plot_decision_boundary(net, X, y, epoch, ((output.squeeze()>=0.5) == y).float().mean(), tloc=TEXT_LOCATION, model_type='classic')
+
+# Now let's look at the results given by MC Dropout:
+
+fig, ax = plt.subplots(figsize=(7,7))
+plot_decision_boundary(net, X, y, epoch, ((output.squeeze()>=0.5) == y).float().mean(), tloc=TEXT_LOCATION, model_type='mcdropout')
