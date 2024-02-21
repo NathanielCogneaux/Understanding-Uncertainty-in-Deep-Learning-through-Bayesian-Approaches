@@ -314,5 +314,36 @@ plt.show()
 
 # II.1 Variational Inference with Bayesian Neural Networks
 
+#@title **[CODING TASK]** Implement a Variational MLP
+
+class VariationalMLP(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size=1):
+        super(VariationalMLP, self).__init__()
+
+        # Initialize KL divergence accumulation mechanism
+        # This might be a simple attribute or a more complex mechanism depending on the implementation
+        self.kl_loss = KL()  # Assuming KL is a class that accumulates KL divergence
+
+        # Define the variational layers
+        self.hidden_layer = LinearVariational(input_size, hidden_size, self)
+        self.output_layer = LinearVariational(hidden_size, output_size, self)
+
+    @property
+    def accumulated_kl_div(self):
+        # Returns the accumulated KL divergence
+        return self.kl_loss.accumulated_kl_div
+
+    def reset_kl_div(self):
+        # Resets the accumulated KL divergence to zero
+        self.kl_loss.accumulated_kl_div = 0
+
+    def forward(self, x):
+        # Forward pass through the hidden layer with ReLU activation
+        x = F.relu(self.hidden_layer(x))
+        # Forward pass through the output layer with sigmoid activation
+        x = torch.sigmoid(self.output_layer(x))
+        return x
+
+
 
 # II.1 Variational Inference with Bayesian Neural Networks
