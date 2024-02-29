@@ -351,4 +351,3 @@ plot_results(dataset_sinus['X_train'], dataset_sinus['y_train'], dataset_sinus['
              dataset_sinus['y_test'], y_pred_gauss, std_pred_gauss,
              xmin=-1, xmax=2, ymin=-2, ymax=3, stdmin=0.05, stdmax=0.2)
 
-#test
