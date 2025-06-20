@@ -14,6 +14,11 @@ You'll find a PDF titled **"Understanding Uncertainty in Deep Learning through B
 
 Accompanying the PDF are a set of **Jupyter notebooks**, which are fully usable. These notebooks reproduce key images, experiments, and results discussed in the notes. You can run them to better understand the concepts and visualizations presented.
 
+All dependencies can be installed at once using:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
 ## 🎤 Presentation Slides
 
 I've also included a set of slides from a presentation I gave on the research paper:
