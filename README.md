@@ -19,11 +19,20 @@ All dependencies can be installed at once using:
    pip install -r requirements.txt
    ```
 
-## 🎤 Presentation Slides
+## 🎤 Presentation Slides & Paper Reviews
 
-I've also included a set of slides from a presentation I gave on the research paper:
-**"Decomposition of Uncertainty in Bayesian Deep Learning for Efficient and Risk-sensitive Learning"**
-by *Stefan Depeweg, José Miguel Hernández-Lobato, Finale Doshi-Velez, and Steffen Udluft*.
-Available here: [arXiv:1710.07283](https://arxiv.org/abs/1710.07283)
+In the folder **`related_docs/`**, you’ll find several documents related to practical applications of **Uncertainty Quantification (UQ)** in deep learning:
 
-This paper illustrates practical applications of UQ in **reinforcement learning** and highlights how different types of uncertainty affect learning performance.
+1. 📄 **Slides** from a presentation on the paper:
+   **"Decomposition of Uncertainty in Bayesian Deep Learning for Efficient and Risk-sensitive Learning"**
+   by *Stefan Depeweg, José Miguel Hernández-Lobato, Finale Doshi-Velez, and Steffen Udluft*
+   → [arXiv:1710.07283](https://arxiv.org/abs/1710.07283)
+   This work focuses on the role of UQ in **reinforcement learning**, and how decomposing uncertainty can improve learning efficiency and safety.
+
+2. 📄 **Slides and a review** of the paper:
+   **"What Uncertainties Do We Need in Bayesian Deep Learning for Computer Vision?"**
+   by *Alex Kendall and Yarin Gal*
+   → [arXiv:1703.04977](https://arxiv.org/abs/1703.04977)
+   This paper addresses how **epistemic and aleatoric uncertainties** contribute to performance in **computer vision** tasks, particularly in regression and segmentation problems.
+
+These materials highlight how different forms of uncertainty play critical roles in both **reinforcement learning** and **computer vision**.
